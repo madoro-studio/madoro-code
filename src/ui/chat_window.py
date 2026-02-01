@@ -904,6 +904,21 @@ class ChatWindow(QMainWindow):
             for model_key in self.agent.llm.list_models():
                 cfg = self.agent.llm.models[model_key]
                 self.model_combo.addItem(cfg.display_name, model_key)
+
+            # Restore last used model from project settings
+            last_model = None
+            try:
+                project = self.project_manager.get_active_project()
+                if project:
+                    settings = self.project_manager.get_project_settings(project.id)
+                    last_model = settings.get("last_model")
+            except:
+                pass
+
+            # Set model: last used > current > default
+            if last_model:
+                self.agent.llm.set_model(last_model)
+
             current_idx = self.model_combo.findData(self.agent.llm.current_model)
             if current_idx >= 0:
                 self.model_combo.setCurrentIndex(current_idx)
@@ -1268,6 +1283,16 @@ class ChatWindow(QMainWindow):
             self.agent.llm.set_model(model_key)
             self.update_status()
             self.add_message(f"Model changed to {self.model_combo.currentText()}", is_user=False, is_system=True)
+
+            # Save last used model to project settings
+            try:
+                project = self.project_manager.get_active_project()
+                if project:
+                    settings = self.project_manager.get_project_settings(project.id)
+                    settings["last_model"] = model_key
+                    self.project_manager.save_project_settings(project.id, settings)
+            except Exception as e:
+                print(f"[UI] Failed to save last model: {e}")
 
     def update_status(self):
         parts = []
