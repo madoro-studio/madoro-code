@@ -51,7 +51,7 @@
 ### 🔧 Multi-Model Support
 - **DeepSeek** - Cost-effective, excellent for coding (V3, R1 Reasoner)
 - **Claude** - Best performance (Sonnet 4, Opus 4)
-- **Gemini** - Fast with huge context (3 Flash, 2.5 Pro)
+- **Gemini** - Fast with huge context (3 Flash, 3 Pro)
 - **Ollama** - Local models for privacy (any Ollama-compatible model)
 
 ### 📁 Multi-Project Management
@@ -63,6 +63,11 @@
 - Approval popup before modifying critical documents
 - Side-by-side diff view for changes
 - Prevents accidental overwrites
+
+### 💾 Auto-Save Progress
+- Type "save" to update SSOT documents with current progress
+- Automatic "Save Progress" prompt when closing the window
+- Extracts completed tasks, decisions, and progress from conversation
 
 ### 🌐 Multi-Language Support
 - Interface in English
@@ -141,7 +146,7 @@ On first launch:
 | Anthropic | Claude Sonnet 4 | Balanced performance | Yes |
 | Anthropic | Claude Opus 4 | Best quality, architecture | Yes |
 | Google | Gemini 3 Flash | Fast tasks | Yes |
-| Google | Gemini 2.5 Pro | Long context, reasoning | Yes |
+| Google | Gemini 3 Pro | Long context, reasoning | Yes |
 
 ### Local Models (Ollama)
 
@@ -219,6 +224,13 @@ api:
 ```
 
 ---
+
+## Commands
+
+| Command | Action |
+|---------|--------|
+| `save` | Update SSOT documents with session progress |
+| `doctor` | Run project health diagnostics |
 
 ## Keyboard Shortcuts
 
