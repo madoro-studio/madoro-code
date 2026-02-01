@@ -404,7 +404,7 @@ class LLMClient:
         """응답에서 툴콜 파싱"""
         tool_calls = []
 
-        # 1. ```json 형식 파싱
+        # 1. ```json 형식 파싱 (가장 우선)
         json_pattern = r'```json\s*(.*?)\s*```'
         matches = re.findall(json_pattern, content, re.DOTALL)
         for match in matches:
@@ -415,15 +415,65 @@ class LLMClient:
             except:
                 pass
 
-        # 2. XML 스타일 파싱 (예: <read_file><path>...</path></read_file>)
+        # 2. apply_patch 전용 파싱 (파일 생성/수정)
+        if not tool_calls:
+            # 패턴: <apply_patch> ... </apply_patch> 내부에 JSON 또는 파일 정보
+            apply_pattern = r'<apply_patch>(.*?)</apply_patch>'
+            apply_match = re.search(apply_pattern, content, re.DOTALL)
+            if apply_match:
+                inner = apply_match.group(1).strip()
+                files = []
+
+                # 방법 1: 내부에 JSON 배열이 있는 경우
+                try:
+                    parsed = json.loads(inner)
+                    if isinstance(parsed, list):
+                        files = parsed
+                    elif isinstance(parsed, dict) and "files" in parsed:
+                        files = parsed["files"]
+                except:
+                    pass
+
+                # 방법 2: <file> 태그로 감싸진 경우
+                if not files:
+                    file_pattern = r'<file>(.*?)</file>'
+                    file_matches = re.findall(file_pattern, inner, re.DOTALL)
+                    for fm in file_matches:
+                        try:
+                            file_data = json.loads(fm)
+                            files.append(file_data)
+                        except:
+                            # path와 content를 직접 추출
+                            path_match = re.search(r'<path>(.*?)</path>', fm, re.DOTALL)
+                            content_match = re.search(r'<content>(.*?)</content>', fm, re.DOTALL)
+                            if path_match and content_match:
+                                files.append({
+                                    "path": path_match.group(1).strip(),
+                                    "content": content_match.group(1)
+                                })
+
+                # 방법 3: path/content 직접 태그
+                if not files:
+                    path_match = re.search(r'<path>(.*?)</path>', inner, re.DOTALL)
+                    content_match = re.search(r'<content>(.*?)</content>', inner, re.DOTALL)
+                    if path_match and content_match:
+                        files.append({
+                            "path": path_match.group(1).strip(),
+                            "content": content_match.group(1)
+                        })
+
+                if files:
+                    tool_calls.append({"tool": "apply_patch", "args": {"files": files}})
+
+        # 3. 기타 XML 스타일 파싱 (단순 파라미터 도구들)
         if not tool_calls:
             xml_tools = {
                 'read_file': ['path'],
                 'search': ['query', 'path'],
-                'apply_patch': ['files'],
                 'run_tests': ['cmd'],
                 'list_files': ['path'],
-                'get_diff': []
+                'get_diff': [],
+                'update_ssot': ['updates']
             }
             for tool_name, params in xml_tools.items():
                 pattern = rf'<{tool_name}>(.*?)</{tool_name}>'
@@ -435,11 +485,18 @@ class LLMClient:
                         param_pattern = rf'<{param}>(.*?)</{param}>'
                         param_match = re.search(param_pattern, inner, re.DOTALL)
                         if param_match:
-                            args[param] = param_match.group(1).strip()
+                            value = param_match.group(1).strip()
+                            # JSON 배열/객체인 경우 파싱 시도
+                            if value.startswith('[') or value.startswith('{'):
+                                try:
+                                    value = json.loads(value)
+                                except:
+                                    pass
+                            args[param] = value
                     if args or not params:
                         tool_calls.append({"tool": tool_name, "args": args})
 
-        # 3. 한 줄 JSON 형식 파싱
+        # 4. 한 줄 JSON 형식 파싱
         if not tool_calls:
             for line in content.split('\n'):
                 line = line.strip()
@@ -450,6 +507,19 @@ class LLMClient:
                             tool_calls.append(data)
                     except:
                         pass
+
+        # 5. 멀티라인 JSON 객체 파싱 (코드블록 없이 직접 JSON인 경우)
+        if not tool_calls:
+            # { "tool": ... } 패턴 찾기
+            json_obj_pattern = r'\{\s*"tool"\s*:\s*"[^"]+"\s*,\s*"args"\s*:\s*\{.*?\}\s*\}'
+            obj_matches = re.findall(json_obj_pattern, content, re.DOTALL)
+            for obj_match in obj_matches:
+                try:
+                    data = json.loads(obj_match)
+                    if "tool" in data:
+                        tool_calls.append(data)
+                except:
+                    pass
 
         return tool_calls if tool_calls else None
 
