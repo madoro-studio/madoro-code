@@ -14,7 +14,7 @@ from dataclasses import dataclass, asdict
 
 @dataclass
 class Project:
-    """프로젝트 정보"""
+    """Project information"""
     id: str
     name: str
     path: str
@@ -31,7 +31,7 @@ class Project:
 
 
 class ProjectManager:
-    """프로젝트 관리자"""
+    """Project Manager"""
 
     def __init__(self, base_path: str = None):
         if base_path is None:
@@ -40,15 +40,15 @@ class ProjectManager:
         self.config_file = self.base_path / "config" / "projects.json"
         self.projects_dir = self.base_path / "projects"
 
-        # 디렉토리 생성
+        # Create directories
         self.projects_dir.mkdir(parents=True, exist_ok=True)
         self.config_file.parent.mkdir(parents=True, exist_ok=True)
 
-        # 설정 로드
+        # Load config
         self.config = self._load_config()
 
     def _load_config(self) -> Dict:
-        """프로젝트 설정 로드"""
+        """Load project configuration"""
         if self.config_file.exists():
             try:
                 with open(self.config_file, "r", encoding="utf-8") as f:
@@ -58,23 +58,23 @@ class ProjectManager:
         return {"projects": [], "active_project": None}
 
     def _save_config(self):
-        """프로젝트 설정 저장"""
+        """Save project configuration"""
         with open(self.config_file, "w", encoding="utf-8") as f:
             json.dump(self.config, f, ensure_ascii=False, indent=2)
 
     def list_projects(self) -> List[Project]:
-        """프로젝트 목록"""
+        """List projects"""
         return [Project.from_dict(p) for p in self.config.get("projects", [])]
 
     def get_project(self, project_id: str) -> Optional[Project]:
-        """프로젝트 조회"""
+        """Get project"""
         for p in self.config.get("projects", []):
             if p["id"] == project_id:
                 return Project.from_dict(p)
         return None
 
     def get_active_project(self) -> Optional[Project]:
-        """현재 활성 프로젝트"""
+        """Get current active project"""
         active_id = self.config.get("active_project")
         if active_id:
             return self.get_project(active_id)
@@ -82,15 +82,15 @@ class ProjectManager:
 
     def create_project(self, name: str, path: str, description: str = "",
                        tech_stack: str = "", max_turns: int = 50) -> Project:
-        """새 프로젝트 생성"""
-        # ID 생성 (이름 기반 slug)
+        """Create new project"""
+        # Generate ID (name-based slug)
         project_id = name.lower().replace(" ", "_").replace("-", "_")
         project_id = "".join(c for c in project_id if c.isalnum() or c == "_")
 
-        # 중복 체크
+        # Check duplicates
         existing_ids = [p["id"] for p in self.config.get("projects", [])]
         if project_id in existing_ids:
-            # 숫자 붙이기
+            # Append number
             i = 2
             while f"{project_id}_{i}" in existing_ids:
                 i += 1
@@ -106,16 +106,16 @@ class ProjectManager:
             description=description
         )
 
-        # 프로젝트 데이터 디렉토리 생성
+        # Create project data directory
         project_data_dir = self.projects_dir / project_id
         project_data_dir.mkdir(parents=True, exist_ok=True)
 
-        # 프로젝트 메타 파일 생성
+        # Create project meta file
         meta_file = project_data_dir / "project.json"
         with open(meta_file, "w", encoding="utf-8") as f:
             json.dump(project.to_dict(), f, ensure_ascii=False, indent=2)
 
-        # 프로젝트 설정 파일 생성
+        # Create project settings file
         settings_file = project_data_dir / "settings.json"
         settings = {
             "tech_stack": tech_stack,
@@ -126,10 +126,10 @@ class ProjectManager:
         with open(settings_file, "w", encoding="utf-8") as f:
             json.dump(settings, f, ensure_ascii=False, indent=2)
 
-        # 템플릿 SSOT 파일 생성 (프로젝트 경로에 없으면)
+        # Create template SSOT files (if not exist in project path)
         self._create_ssot_templates(Path(path), name)
 
-        # 설정에 추가
+        # Add to config
         self.config.setdefault("projects", []).append(project.to_dict())
         self.config["active_project"] = project_id
         self._save_config()
@@ -192,10 +192,10 @@ class ProjectManager:
             constitution_path.write_text(constitution_content, encoding="utf-8")
 
     def switch_project(self, project_id: str) -> Optional[Project]:
-        """프로젝트 전환"""
+        """Switch project"""
         project = self.get_project(project_id)
         if project:
-            # last_opened 업데이트
+            # Update last_opened
             for p in self.config.get("projects", []):
                 if p["id"] == project_id:
                     p["last_opened"] = datetime.now().isoformat()
@@ -207,11 +207,11 @@ class ProjectManager:
         return None
 
     def get_current_project(self) -> Optional[Project]:
-        """현재 활성 프로젝트 (get_active_project 별칭)"""
+        """Get current active project (alias for get_active_project)"""
         return self.get_active_project()
 
     def update_project(self, project_id: str, name: str = None, description: str = None) -> Optional[Project]:
-        """프로젝트 기본 정보 업데이트"""
+        """Update project basic info"""
         for p in self.config.get("projects", []):
             if p["id"] == project_id:
                 if name is not None:
@@ -224,20 +224,20 @@ class ProjectManager:
         return None
 
     def delete_project(self, project_id: str, delete_data: bool = False) -> bool:
-        """프로젝트 삭제"""
+        """Delete project"""
         projects = self.config.get("projects", [])
         new_projects = [p for p in projects if p["id"] != project_id]
 
         if len(new_projects) == len(projects):
-            return False  # 삭제할 프로젝트 없음
+            return False  # No project to delete
 
-        # 데이터 삭제 (선택적)
+        # Delete data (optional)
         if delete_data:
             project_data_dir = self.projects_dir / project_id
             if project_data_dir.exists():
                 shutil.rmtree(project_data_dir)
 
-        # 설정 업데이트
+        # Update config
         self.config["projects"] = new_projects
         if self.config.get("active_project") == project_id:
             self.config["active_project"] = new_projects[0]["id"] if new_projects else None
@@ -246,7 +246,7 @@ class ProjectManager:
         return True
 
     def get_project_db_path(self, project_id: str = None) -> str:
-        """프로젝트별 DB 경로"""
+        """Get project-specific DB path"""
         if project_id is None:
             project_id = self.config.get("active_project", "default")
 
@@ -256,7 +256,7 @@ class ProjectManager:
         return str(project_data_dir / "memory.db")
 
     def get_project_settings(self, project_id: str = None) -> Dict:
-        """프로젝트 설정 가져오기"""
+        """Get project settings"""
         if project_id is None:
             project_id = self.config.get("active_project")
 
@@ -274,7 +274,7 @@ class ProjectManager:
         return {"max_turns": 50, "tech_stack": ""}
 
     def save_project_settings(self, project_id: str, settings: Dict):
-        """프로젝트 설정 저장"""
+        """Save project settings"""
         project_data_dir = self.projects_dir / project_id
         project_data_dir.mkdir(parents=True, exist_ok=True)
 
@@ -284,16 +284,16 @@ class ProjectManager:
             json.dump(settings, f, ensure_ascii=False, indent=2)
 
     def import_existing_project(self, name: str, path: str, description: str = "") -> Project:
-        """기존 프로젝트 가져오기 (이미 HANDOVER.md 등이 있는 경우)"""
+        """Import existing project (when HANDOVER.md etc. already exist)"""
         return self.create_project(name, path, description)
 
 
-# 싱글톤 인스턴스
+# Singleton Instance
 _project_manager: Optional[ProjectManager] = None
 
 
 def get_project_manager(base_path: str = None) -> ProjectManager:
-    """프로젝트 매니저 싱글톤"""
+    """Project manager singleton"""
     global _project_manager
     if _project_manager is None:
         _project_manager = ProjectManager(base_path)
@@ -301,6 +301,6 @@ def get_project_manager(base_path: str = None) -> ProjectManager:
 
 
 def reset_project_manager():
-    """테스트용 리셋"""
+    """Reset for testing"""
     global _project_manager
     _project_manager = None

@@ -1,10 +1,10 @@
 """
-MADORO CODE - CLI 진입점
+MADORO CODE - CLI Entry Point
 
-명령어:
-- vibe doctor: 프로젝트 상태 진단
-- vibe chat: 대화 시작
-- vibe chat --model <model>: 특정 모델로 대화
+Commands:
+- vibe doctor: Diagnose project status
+- vibe chat: Start conversation
+- vibe chat --model <model>: Chat with specific model
 """
 
 import sys
@@ -12,7 +12,7 @@ import os
 import argparse
 from pathlib import Path
 
-# 프로젝트 루트 설정
+# Set project root
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 os.chdir(PROJECT_ROOT)
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
@@ -23,39 +23,39 @@ from memory import get_memory_store
 
 
 def cmd_doctor(args):
-    """프로젝트 상태 진단"""
+    """Diagnose project status"""
     agent = get_agent(str(PROJECT_ROOT))
     print(agent.doctor())
 
 
 def cmd_chat(args):
-    """대화 시작"""
+    """Start conversation"""
     agent = get_agent(str(PROJECT_ROOT))
     llm = get_llm_client()
 
-    # 모델 선택
+    # Select model
     if args.model:
         if llm.set_model(args.model):
-            print(f"모델 선택: {args.model}")
+            print(f"Model selected: {args.model}")
         else:
-            print(f"알 수 없는 모델: {args.model}")
-            print(f"사용 가능: {llm.list_models()}")
+            print(f"Unknown model: {args.model}")
+            print(f"Available: {llm.list_models()}")
             return
 
-    # 연결 확인
+    # Check connection
     if not llm.check_connection():
-        print("❌ Ollama 연결 실패. Ollama를 먼저 실행하세요.")
+        print("❌ Ollama connection failed. Start Ollama first.")
         print("   ollama serve")
         return
 
-    # 모델 확인
+    # Check model
     if not llm.check_model_available():
         model_cfg = llm.get_model_config()
-        print(f"❌ 모델 없음: {model_cfg.ollama_model}")
+        print(f"❌ Model not found: {model_cfg.ollama_model}")
         print(f"   ollama pull {model_cfg.ollama_model}")
         return
 
-    # 대화 시작
+    # Start conversation
     print("=" * 60)
     print("  MADORO CODE Chat")
     print(f"  Model: {llm.get_model_config().display_name}")
@@ -81,19 +81,19 @@ def cmd_chat(args):
             if user_input.lower() == 'clear':
                 memory = get_memory_store()
                 memory.clear_conversation()
-                print("대화 기록 초기화됨")
+                print("Conversation cleared")
                 continue
 
             if user_input.lower().startswith('model '):
                 model_name = user_input[6:].strip()
                 if llm.set_model(model_name):
-                    print(f"모델 변경: {llm.get_model_config().display_name}")
+                    print(f"Model changed: {llm.get_model_config().display_name}")
                 else:
-                    print(f"알 수 없는 모델: {model_name}")
-                    print(f"사용 가능: {llm.list_models()}")
+                    print(f"Unknown model: {model_name}")
+                    print(f"Available: {llm.list_models()}")
                 continue
 
-            # 에이전트 처리
+            # Agent processing
             print("...")
             response = agent.process(user_input)
 
@@ -102,7 +102,7 @@ def cmd_chat(args):
             else:
                 print(f"\nVibe: {response.message}")
                 if response.tool_results:
-                    print(f"\n[실행된 도구: {len(response.tool_results)}개]")
+                    print(f"\n[Tools executed: {len(response.tool_results)}]")
                     for tr in response.tool_results:
                         status = "✅" if tr.get("success") else "❌"
                         print(f"  {status} {tr.get('tool')}")
@@ -118,10 +118,10 @@ def cmd_chat(args):
 
 
 def cmd_models(args):
-    """사용 가능한 모델 목록"""
+    """List available models"""
     llm = get_llm_client()
 
-    print("사용 가능한 모델:")
+    print("Available models:")
     print("-" * 40)
 
     connected = llm.check_connection()
@@ -138,39 +138,39 @@ def cmd_models(args):
 
         print(f"{current}{status} {model_key}: {cfg.display_name}")
         print(f"       Ollama: {cfg.ollama_model}")
-        print(f"       용도: {', '.join(cfg.use_for)}")
+        print(f"       Use for: {', '.join(cfg.use_for)}")
         print()
 
     if not connected:
-        print("⚠️  Ollama 연결 안됨 - 모델 상태 확인 불가")
+        print("⚠️  Ollama not connected - Cannot check model status")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="MADORO CODE - 프로젝트 기억 시스템"
+        description="MADORO CODE - Project Memory System"
     )
-    subparsers = parser.add_subparsers(dest="command", help="명령어")
+    subparsers = parser.add_subparsers(dest="command", help="Commands")
 
     # doctor
-    parser_doctor = subparsers.add_parser("doctor", help="프로젝트 상태 진단")
+    parser_doctor = subparsers.add_parser("doctor", help="Diagnose project status")
     parser_doctor.set_defaults(func=cmd_doctor)
 
     # chat
-    parser_chat = subparsers.add_parser("chat", help="대화 시작")
+    parser_chat = subparsers.add_parser("chat", help="Start conversation")
     parser_chat.add_argument(
         "--model", "-m",
-        help="사용할 모델 (deepseek, qwen-coder)"
+        help="Model to use (deepseek, qwen-coder)"
     )
     parser_chat.set_defaults(func=cmd_chat)
 
     # models
-    parser_models = subparsers.add_parser("models", help="사용 가능한 모델 목록")
+    parser_models = subparsers.add_parser("models", help="List available models")
     parser_models.set_defaults(func=cmd_models)
 
     args = parser.parse_args()
 
     if args.command is None:
-        # 기본: doctor
+        # Default: doctor
         cmd_doctor(args)
     else:
         args.func(args)

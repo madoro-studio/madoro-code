@@ -1,13 +1,13 @@
 """
-MADORO CODE - 에이전트 루프
+MADORO CODE - Agent Loop
 
-작동 플로우:
-1. 사용자 요청
-2. 컨텍스트 팩 생성 (SSOT + 관련 파일 + 최근 대화)
-3. LLM이 툴콜(JSON)로 패치 생성
-4. Executor가 패치 적용
-5. 테스트 실행
-6. 로그 기록 → 다시 모델에 피드백
+Workflow:
+1. User request
+2. Build context pack (SSOT + related files + recent conversation)
+3. LLM generates tool calls (JSON) for patches
+4. Executor applies patches
+5. Run tests
+6. Log work -> feedback to model
 """
 
 import json
@@ -22,14 +22,14 @@ from context import get_context_builder, ContextPack
 
 @dataclass
 class AgentResponse:
-    """에이전트 응답"""
+    """Agent response"""
     message: str
     tool_results: List[Dict] = None
     error: Optional[str] = None
 
 
 class Agent:
-    """MADORO CODE 에이전트"""
+    """MADORO CODE Agent"""
 
     SYSTEM_PROMPT = """You are MADORO CODE, a coding assistant.
 
@@ -70,7 +70,7 @@ SSOT Update Rules (when user says "save", "update docs", "save progress"):
 - Include brief description of changes
 """
 
-    MAX_ITERATIONS = 5  # 최대 툴콜 반복 횟수
+    MAX_ITERATIONS = 5  # Max tool call iterations
 
     def __init__(self, project_root: str = ".", progress_callback=None,
                  ssot_approval_callback=None):
@@ -92,7 +92,7 @@ SSOT Update Rules (when user says "save", "update docs", "save progress"):
         """Process user input"""
         self._report_progress("Starting", user_input[:50])
 
-        # 대화 턴 기록
+        # Record conversation turn
         self.memory.add_turn("user", user_input)
 
         # Build context pack
@@ -103,15 +103,15 @@ SSOT Update Rules (when user says "save", "update docs", "save progress"):
         )
         self._report_progress("Context ready", f"{len(context_pack.project_state)} chars")
 
-        # LLM 호출 (툴콜 포함)
+        # LLM call (with tool calls)
         all_tool_results = []
         final_response = None
 
         for iteration in range(self.MAX_ITERATIONS):
-            # 프롬프트 구성
+            # Build prompt
             prompt = self._build_prompt(user_input, context_pack, all_tool_results)
 
-            # 현재 모델명 가져오기
+            # Get current model name
             model_cfg = self.llm.get_model_config()
             model_name = model_cfg.display_name if model_cfg else "LLM"
             self._report_progress("LLM call", f"Waiting for {model_name}...")
@@ -130,7 +130,7 @@ SSOT Update Rules (when user says "save", "update docs", "save progress"):
                     error=f"LLM call failed: {e}"
                 )
 
-            # 툴콜 처리
+            # Process tool calls
             if response.tool_calls:
                 for tool_call in response.tool_calls:
                     tool_name = tool_call.get("tool", "")
@@ -177,7 +177,7 @@ SSOT Update Rules (when user says "save", "update docs", "save progress"):
                     else:
                         self._report_progress("Tests skipped", "No test files found")
             else:
-                # 툴콜 없으면 최종 응답
+                # No tool calls, final response
                 final_response = response.content
                 break
 
@@ -195,10 +195,10 @@ SSOT Update Rules (when user says "save", "update docs", "save progress"):
 
         self._report_progress("Complete", "")
 
-        # 응답 기록
+        # Record response
         self.memory.add_turn("assistant", final_response[:500])
 
-        # 작업 로그
+        # Log work
         self.memory.log_work(
             action="CHAT",
             target="agent",
@@ -216,7 +216,7 @@ SSOT Update Rules (when user says "save", "update docs", "save progress"):
         )
 
     def _get_tool_detail(self, tool_name: str, args: Dict) -> str:
-        """도구 실행 상세 정보 생성"""
+        """Generate tool execution detail info"""
         if tool_name == "read_file":
             return args.get("path", "")[:50]
         elif tool_name == "search":
@@ -224,42 +224,42 @@ SSOT Update Rules (when user says "save", "update docs", "save progress"):
         elif tool_name == "apply_patch":
             files = args.get("files", [])
             if files:
-                return f"{len(files)}개 파일"
+                return f"{len(files)} files"
             return ""
         elif tool_name == "run_tests":
             return args.get("cmd", "pytest")[:30]
         elif tool_name == "list_files":
             return args.get("path", ".")[:30]
         elif tool_name == "get_diff":
-            return "git 변경사항"
+            return "git changes"
         return ""
 
     def _extract_search_query(self, user_input: str) -> str:
-        """사용자 입력에서 검색 쿼리 추출"""
-        # 간단한 키워드 추출
+        """Extract search query from user input"""
+        # Simple keyword extraction
         keywords = []
         for word in user_input.split():
-            if len(word) > 2 and not word.startswith(('이', '그', '저', '뭐', '어떻')):
+            if len(word) > 2:
                 keywords.append(word)
         return ' '.join(keywords[:3])
 
     def _build_prompt(self, user_input: str, context: ContextPack,
                       tool_results: List[Dict]) -> str:
-        """LLM 프롬프트 구성"""
+        """Build LLM prompt"""
         parts = []
 
-        # 컨텍스트
+        # Context
         parts.append(context.to_prompt())
 
-        # 이전 툴 결과
+        # Previous tool results
         if tool_results:
             parts.append("[TOOL RESULTS]")
-            for tr in tool_results[-3:]:  # 최근 3개만
+            for tr in tool_results[-3:]:  # Last 3 only
                 status = "✅" if tr.get("success") else "❌"
                 parts.append(f"{status} {tr.get('tool')}: {tr.get('output', '')[:200]}")
             parts.append("")
 
-        # 사용자 요청
+        # User request
         parts.append("[USER REQUEST]")
         parts.append(user_input)
 
@@ -267,74 +267,74 @@ SSOT Update Rules (when user says "save", "update docs", "save progress"):
 
     def _build_summary_prompt(self, user_input: str, context: ContextPack,
                               tool_results: List[Dict]) -> str:
-        """최종 요약 프롬프트"""
+        """Build final summary prompt"""
         parts = []
 
-        parts.append("다음 작업을 완료했습니다. 결과를 요약해주세요.")
+        parts.append("The following tasks have been completed. Please summarize the results.")
         parts.append("")
-        parts.append(f"[요청] {user_input}")
+        parts.append(f"[Request] {user_input}")
         parts.append("")
-        parts.append("[수행된 작업]")
+        parts.append("[Performed Tasks]")
         for tr in tool_results:
-            status = "성공" if tr.get("success") else "실패"
+            status = "success" if tr.get("success") else "failed"
             parts.append(f"- {tr.get('tool')}: {status}")
             if tr.get("error"):
-                parts.append(f"  오류: {tr.get('error')}")
+                parts.append(f"  Error: {tr.get('error')}")
 
         return "\n".join(parts)
 
     def doctor(self) -> str:
-        """프로젝트 상태 진단 (vibe doctor)"""
-        context = self.context_builder.build(task="프로젝트 상태 점검")
+        """Project status diagnosis (vibe doctor)"""
+        context = self.context_builder.build(task="Project status check")
 
         report = []
         report.append("=" * 60)
-        report.append("  MADORO CODE Doctor - 프로젝트 상태 리포트")
+        report.append("  MADORO CODE Doctor - Project Status Report")
         report.append("=" * 60)
         report.append("")
 
-        # 프로젝트 상태
-        report.append("[📋 프로젝트 상태]")
-        # HANDOVER.md에서 현재 상태 추출
-        if "현재 상태" in context.project_state:
+        # Project status
+        report.append("[📋 Project Status]")
+        # Extract current state from HANDOVER.md
+        if "Current" in context.project_state or "Status" in context.project_state:
             for line in context.project_state.split('\n'):
-                if '|' in line and ('버전' in line or '단계' in line or '작업' in line):
+                if '|' in line:
                     report.append(f"  {line.strip()}")
         report.append("")
 
-        # 열린 이슈
-        report.append("[🐛 열린 이슈]")
+        # Open issues
+        report.append("[🐛 Open Issues]")
         if context.open_issues:
             for issue in context.open_issues:
                 report.append(f"  [{issue['severity']}] {issue['title']}")
         else:
-            report.append("  없음")
+            report.append("  None")
         report.append("")
 
-        # 최근 변경
-        report.append("[📝 최근 변경]")
+        # Recent changes
+        report.append("[📝 Recent Changes]")
         if context.recent_changes and context.recent_changes != "(No git history)":
             for line in context.recent_changes.split('\n')[:5]:
                 report.append(f"  {line}")
         else:
-            report.append("  변경 없음")
+            report.append("  No changes")
         report.append("")
 
-        # 최근 대화
-        report.append("[💬 최근 대화]")
+        # Recent conversation
+        report.append("[💬 Recent Conversation]")
         if context.recent_turns:
             for turn in context.recent_turns[-3:]:
                 content = turn['content'][:50] + "..." if len(turn['content']) > 50 else turn['content']
                 report.append(f"  [{turn['role']}] {content}")
         else:
-            report.append("  대화 없음")
+            report.append("  No conversation")
         report.append("")
 
-        # 모델 상태
-        report.append("[🤖 모델 상태]")
-        report.append(f"  현재 모델: {self.llm.current_model}")
+        # Model status
+        report.append("[🤖 Model Status]")
+        report.append(f"  Current model: {self.llm.current_model}")
         connected = self.llm.check_connection()
-        report.append(f"  Ollama 연결: {'✅ 정상' if connected else '❌ 연결 안됨'}")
+        report.append(f"  Ollama connection: {'✅ Connected' if connected else '❌ Not connected'}")
         if connected:
             for model_key in self.llm.list_models():
                 available = self.llm.check_model_available(model_key)
@@ -349,14 +349,14 @@ SSOT Update Rules (when user says "save", "update docs", "save progress"):
 
 
 # ============================================
-# 싱글톤 인스턴스
+# Singleton Instance
 # ============================================
 
 _agent: Optional[Agent] = None
 
 
 def get_agent(project_root: str = ".") -> Agent:
-    """에이전트 싱글톤"""
+    """Agent singleton"""
     global _agent
     if _agent is None:
         _agent = Agent(project_root)
@@ -364,7 +364,7 @@ def get_agent(project_root: str = ".") -> Agent:
 
 
 # ============================================
-# 테스트
+# Test
 # ============================================
 
 if __name__ == "__main__":
@@ -381,9 +381,9 @@ if __name__ == "__main__":
     if agent.llm.check_connection():
         print("  Ollama connected!")
 
-        # 간단한 테스트
+        # Simple test
         print("\n[3] Simple Request")
-        response = agent.process("현재 디렉토리의 파일 목록을 보여줘")
+        response = agent.process("Show me the file list in current directory")
         print(f"  Response: {response.message[:200]}...")
         if response.tool_results:
             print(f"  Tool calls: {len(response.tool_results)}")

@@ -24,43 +24,43 @@ from PyQt6.QtGui import QFont, QColor, QPalette, QIcon, QImage, QCloseEvent
 
 
 # ============================================
-# 🎨 Nordic Olive Retro 테마 컬러
+# 🎨 Nordic Olive Retro Theme Colors
 # ============================================
 class Theme:
-    # 베이스 컬러 (올리브 그린 톤)
-    BG_DARK = "#1a1f1a"          # 가장 어두운 배경
-    BG_MAIN = "#232823"          # 메인 배경
-    BG_CARD = "#2d352d"          # 카드/패널 배경
-    BG_INPUT = "#363e36"         # 입력 필드 배경
+    # Base colors (olive green tone)
+    BG_DARK = "#1a1f1a"          # Darkest background
+    BG_MAIN = "#232823"          # Main background
+    BG_CARD = "#2d352d"          # Card/panel background
+    BG_INPUT = "#363e36"         # Input field background
 
-    # 악센트 컬러
-    OLIVE = "#7c9a6e"            # 메인 올리브
-    OLIVE_LIGHT = "#98b386"      # 밝은 올리브
-    OLIVE_DARK = "#5a7a4a"       # 어두운 올리브
-    SAGE = "#a8b5a0"             # 세이지 그린
+    # Accent colors
+    OLIVE = "#7c9a6e"            # Main olive
+    OLIVE_LIGHT = "#98b386"      # Light olive
+    OLIVE_DARK = "#5a7a4a"       # Dark olive
+    SAGE = "#a8b5a0"             # Sage green
 
-    # 레트로 악센트
-    CREAM = "#e8e4d9"            # 크림색 (텍스트)
-    WARM_WHITE = "#f5f2eb"       # 따뜻한 화이트
-    TERRACOTTA = "#c17f59"       # 테라코타 (하이라이트)
-    MUSTARD = "#d4a84b"          # 머스타드 (경고/강조)
+    # Retro accents
+    CREAM = "#e8e4d9"            # Cream (text)
+    WARM_WHITE = "#f5f2eb"       # Warm white
+    TERRACOTTA = "#c17f59"       # Terracotta (highlight)
+    MUSTARD = "#d4a84b"          # Mustard (warning/emphasis)
 
-    # 상태 컬러
-    SUCCESS = "#7c9a6e"          # 성공 (올리브)
-    ERROR = "#b85c5c"            # 에러 (머티드 레드)
-    INFO = "#6b8fa3"             # 정보 (머티드 블루)
+    # Status colors
+    SUCCESS = "#7c9a6e"          # Success (olive)
+    ERROR = "#b85c5c"            # Error (muted red)
+    INFO = "#6b8fa3"             # Info (muted blue)
 
-    # 테두리
-    BORDER = "#3d453d"           # 기본 테두리
-    BORDER_LIGHT = "#4a544a"     # 밝은 테두리
+    # Borders
+    BORDER = "#3d453d"           # Default border
+    BORDER_LIGHT = "#4a544a"     # Light border
 
-    # 텍스트
-    TEXT_PRIMARY = "#e8e4d9"     # 기본 텍스트
-    TEXT_SECONDARY = "#a8a89a"   # 보조 텍스트
-    TEXT_MUTED = "#6a6a5a"       # 흐린 텍스트
+    # Text
+    TEXT_PRIMARY = "#e8e4d9"     # Primary text
+    TEXT_SECONDARY = "#a8a89a"   # Secondary text
+    TEXT_MUTED = "#6a6a5a"       # Muted text
 
 
-# 설정 파일 경로
+# Settings file path
 SETTINGS_FILE = Path(__file__).parent.parent.parent / "config" / "app_settings.json"
 
 
@@ -106,7 +106,7 @@ class SSOTApprovalBridge:
 
 
 class LLMWorker(QThread):
-    """LLM 호출을 별도 스레드에서 처리"""
+    """Handle LLM calls in separate thread"""
     finished = pyqtSignal(str, list)  # message, tool_results
     error = pyqtSignal(str)
     progress = pyqtSignal(str, str)  # status, detail
@@ -117,11 +117,11 @@ class LLMWorker(QThread):
         self.agent = agent
         self.user_input = user_input
         self.ssot_bridge = ssot_bridge
-        # Agent에 progress callback 연결
+        # Connect progress callback to Agent
         self.agent.progress_callback = self._on_progress
 
     def _on_progress(self, status: str, detail: str):
-        """Agent에서 진행 상황 수신"""
+        """Receive progress from Agent"""
         self.progress.emit(status, detail)
 
     def _on_ssot_approval(self, file_name: str, file_path: str,
@@ -151,7 +151,7 @@ class LLMWorker(QThread):
 
 
 class PasteableTextEdit(QTextEdit):
-    """이미지/파일 붙여넣기를 지원하는 TextEdit"""
+    """TextEdit with image/file paste support"""
 
     imagePasted = pyqtSignal(QImage)
     fileDropped = pyqtSignal(list)
@@ -226,7 +226,7 @@ class PasteableTextEdit(QTextEdit):
 
 
 class MessageWidget(QFrame):
-    """Nordic Olive 스타일 메시지 위젯"""
+    """Nordic Olive style message widget"""
 
     def __init__(self, text: str, is_user: bool = True, is_system: bool = False, parent=None):
         super().__init__(parent)
@@ -272,12 +272,12 @@ class MessageWidget(QFrame):
 
         layout.addWidget(avatar, alignment=Qt.AlignmentFlag.AlignTop)
 
-        # 메시지 내용
+        # Message content
         content_layout = QVBoxLayout()
         content_layout.setContentsMargins(0, 0, 0, 0)
         content_layout.setSpacing(6)
 
-        # 헤더 (이름 + 시간 + 복사버튼)
+        # Header (name + time + copy button)
         header_layout = QHBoxLayout()
         header_layout.setSpacing(10)
 
@@ -306,9 +306,9 @@ class MessageWidget(QFrame):
 
         header_layout.addStretch()
 
-        # 복사 버튼 (미니멀 아이콘 스타일)
+        # Copy button (minimal icon style)
         if not is_system:
-            copy_btn = QPushButton("⊏")  # 미니멀 복사 아이콘
+            copy_btn = QPushButton("⊏")  # Minimal copy icon
             copy_btn.setFixedSize(28, 28)
             copy_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             copy_btn.setToolTip("Copy to clipboard")
@@ -330,7 +330,7 @@ class MessageWidget(QFrame):
 
         content_layout.addLayout(header_layout)
 
-        # 메시지 텍스트
+        # Message text
         message_label = QLabel(text)
         message_label.setWordWrap(True)
         message_label.setTextInteractionFlags(
@@ -347,7 +347,7 @@ class MessageWidget(QFrame):
         content_layout.addWidget(message_label)
         layout.addLayout(content_layout, 1)
 
-        # 메시지 박스 스타일
+        # Message box style
         if is_system:
             self.setStyleSheet(f"""
                 MessageWidget {{
@@ -411,7 +411,7 @@ class MessageWidget(QFrame):
 
 
 class ChatWindow(QMainWindow):
-    """메인 채팅 윈도우 - Nordic Olive Theme"""
+    """Main chat window - Nordic Olive Theme"""
 
     def __init__(self):
         super().__init__()
@@ -506,13 +506,13 @@ class ChatWindow(QMainWindow):
             from agent import Agent
             path = project_path or "."
             self.agent = Agent(path)
-            print(f"Agent 초기화 완료: {path}")
-            print(f"LLM 연결: {self.agent.llm.check_connection()}")
-            print(f"모델: {list(self.agent.llm.models.keys())}")
+            print(f"Agent initialized: {path}")
+            print(f"LLM connection: {self.agent.llm.check_connection()}")
+            print(f"Models: {list(self.agent.llm.models.keys())}")
             return True
         except Exception as e:
             import traceback
-            print(f"Agent 초기화 실패: {e}")
+            print(f"Agent initialization failed: {e}")
             traceback.print_exc()
             return False
 
@@ -623,7 +623,7 @@ class ChatWindow(QMainWindow):
 
         layout.addStretch()
 
-        # 모델 선택
+        # Model selection
         model_label = QLabel("Model")
         model_label.setStyleSheet(f"color: {Theme.TEXT_MUTED}; font-size: 11px; letter-spacing: 1px;")
         layout.addWidget(model_label)
@@ -632,7 +632,7 @@ class ChatWindow(QMainWindow):
         self.model_combo.setMinimumWidth(180)
         self.model_combo.setMinimumHeight(32)
         self.model_combo.setEditable(False)
-        # 스타일시트 없이 기본 스타일 사용 (드롭다운 문제 해결)
+        # Use default style without stylesheet (fixes dropdown issues)
 
         layout.addWidget(self.model_combo)
 
@@ -653,7 +653,7 @@ class ChatWindow(QMainWindow):
         layout = QHBoxLayout(bar)
         layout.setContentsMargins(24, 0, 24, 0)
 
-        # 프로젝트 아이콘
+        # Project icon
         folder_icon = QLabel("◈")
         folder_icon.setStyleSheet(f"color: {Theme.OLIVE}; font-size: 14px;")
         layout.addWidget(folder_icon)
@@ -662,15 +662,15 @@ class ChatWindow(QMainWindow):
         project_label.setStyleSheet(f"color: {Theme.TEXT_MUTED}; font-size: 11px; letter-spacing: 1px;")
         layout.addWidget(project_label)
 
-        # 프로젝트 선택 콤보박스
+        # Project selection combo box
         self.project_combo = QComboBox()
         self.project_combo.setMinimumWidth(200)
         self.project_combo.setEditable(False)
-        # 스타일시트 없이 기본 스타일 사용
+        # Use default style without stylesheet
         self.project_combo.currentIndexChanged.connect(self.on_project_changed)
         layout.addWidget(self.project_combo)
 
-        # 프로젝트 경로 표시
+        # Project path display
         self.project_path_label = QLabel("")
         self.project_path_label.setStyleSheet(f"""
             color: {Theme.TEXT_MUTED};
@@ -681,7 +681,7 @@ class ChatWindow(QMainWindow):
 
         layout.addStretch()
 
-        # 새 프로젝트 버튼
+        # New project button
         self.new_project_btn = QPushButton("+")
         self.new_project_btn.setFixedSize(28, 28)
         self.new_project_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -703,7 +703,7 @@ class ChatWindow(QMainWindow):
         self.new_project_btn.clicked.connect(self.create_new_project)
         layout.addWidget(self.new_project_btn)
 
-        # 프로젝트 편집 버튼
+        # Project edit button
         self.edit_project_btn = QPushButton("⚙")
         self.edit_project_btn.setFixedSize(28, 28)
         self.edit_project_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -804,11 +804,11 @@ class ChatWindow(QMainWindow):
                 self.project_path = project.path
                 self.project_path_label.setText(self._get_display_path())
 
-                # Memory 리셋 (새 프로젝트 DB 로드)
+                # Reset memory (load new project DB)
                 import memory as memory_module
                 memory_module.reset_memory_store()
 
-                # Agent 재초기화
+                # Reinitialize Agent
                 if self.init_agent(project.path):
                     self.load_project_context()
                     self.update_model_combo()
@@ -836,10 +836,10 @@ class ChatWindow(QMainWindow):
                         max_turns=result.get("max_turns", 50)
                     )
 
-                    # 프로젝트 목록 갱신
+                    # Refresh project list
                     self.update_project_combo()
 
-                    # 새 프로젝트로 전환
+                    # Switch to new project
                     idx = self.project_combo.findData(project.id)
                     if idx >= 0:
                         self.project_combo.setCurrentIndex(idx)
@@ -870,20 +870,20 @@ class ChatWindow(QMainWindow):
             result = dialog.get_result()
             if result:
                 try:
-                    # 프로젝트 설정 업데이트
+                    # Update project settings
                     pm.save_project_settings(current_project.id, {
                         "max_turns": result.get("max_turns", 50),
                         "tech_stack": result.get("tech_stack", "")
                     })
 
-                    # 프로젝트 기본 정보 업데이트
+                    # Update project basic info
                     pm.update_project(
                         current_project.id,
                         name=result["name"],
                         description=result.get("description", "")
                     )
 
-                    # 프로젝트 목록 갱신
+                    # Refresh project list
                     self.update_project_combo()
 
                     self.add_message(
@@ -971,7 +971,7 @@ class ChatWindow(QMainWindow):
         scroll.setWidget(self.chat_container)
         self.scroll_area = scroll
 
-        # 환영 메시지
+        # Welcome message
         welcome = "Welcome to MADORO CODE.\n"
         if self.project_path:
             welcome += f"Current project: {Path(self.project_path).name}"
@@ -996,7 +996,7 @@ class ChatWindow(QMainWindow):
         layout.setContentsMargins(48, 16, 48, 16)
         layout.setSpacing(12)
 
-        # 입력 필드
+        # Input field
         self.input_field = PasteableTextEdit()
         self.input_field.setPlaceholderText("Type a message... (Ctrl+V to paste, drag & drop supported)")
         self.input_field.imagePasted.connect(self.on_image_pasted)
@@ -1020,7 +1020,7 @@ class ChatWindow(QMainWindow):
         self.input_field.installEventFilter(self)
         layout.addWidget(self.input_field)
 
-        # 전송 버튼
+        # Send button
         self.send_btn = QPushButton("→")
         self.send_btn.setFixedSize(48, 48)
         self.send_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -1114,7 +1114,7 @@ class ChatWindow(QMainWindow):
         self.input_field.clear()
         self.input_field.clear_attachments()
 
-        # 특수 명령어
+        # Special commands
         if text.lower() == "doctor":
             if self.agent:
                 report = self.agent.doctor()
@@ -1137,7 +1137,7 @@ class ChatWindow(QMainWindow):
                 self.add_message("No project context loaded.", is_user=False, is_system=True)
             return
 
-        # LLM 호출
+        # LLM call
         if self.agent:
             self.send_btn.setEnabled(False)
             self.input_field.setEnabled(False)
@@ -1169,7 +1169,7 @@ class ChatWindow(QMainWindow):
 
     def _update_elapsed_time(self):
         self.elapsed_seconds += 1
-        # 상태바는 progress_update에서 업데이트하므로 시간만 추가
+        # Status bar is updated in progress_update, just add time
         if hasattr(self, '_current_status'):
             self.statusBar.showMessage(f"{self._current_status} ({self.elapsed_seconds}s)")
 
@@ -1178,21 +1178,21 @@ class ChatWindow(QMainWindow):
         if status == "Complete":
             return
 
-        # 상태 저장 (타이머에서 사용)
+        # Save status (used by timer)
         if detail:
             self._current_status = f"{status}: {detail}"
         else:
             self._current_status = status
 
-        # 상태바 업데이트
+        # Update status bar
         self.statusBar.showMessage(f"{self._current_status} ({self.elapsed_seconds}s)")
 
-        # thinking_msg 위젯 텍스트 업데이트
+        # Update thinking_msg widget text
         if self.thinking_msg:
-            # 메시지 라벨 찾아서 업데이트
+            # Find and update message label
             labels = self.thinking_msg.findChildren(QLabel)
             for label in labels:
-                if label.wordWrap():  # 메시지 라벨은 wordWrap이 True
+                if label.wordWrap():  # Message label has wordWrap True
                     label.setText(f"⟳ {self._current_status}")
                     break
 
@@ -1401,7 +1401,7 @@ def main():
     app.setApplicationName("MADORO CODE")
     app.setOrganizationName("MADORO STUDIO")
 
-    # Nordic Olive 테마 팔레트
+    # Nordic Olive theme palette
     palette = QPalette()
     palette.setColor(QPalette.ColorRole.Window, QColor(Theme.BG_MAIN))
     palette.setColor(QPalette.ColorRole.WindowText, QColor(Theme.TEXT_PRIMARY))
@@ -1413,7 +1413,7 @@ def main():
     palette.setColor(QPalette.ColorRole.HighlightedText, QColor(Theme.WARM_WHITE))
     app.setPalette(palette)
 
-    # 폰트 (시스템 산세리프)
+    # Font (system sans-serif)
     font = QFont("Segoe UI", 10)
     font.setStyleHint(QFont.StyleHint.SansSerif)
     app.setFont(font)
