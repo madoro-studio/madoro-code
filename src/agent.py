@@ -139,18 +139,30 @@ SSOT Update Rules (when user says "save", "update docs", "save progress"):
                         "error": result.error
                     })
 
-                # Auto-run tests after patch applied
+                # Auto-run tests after patch applied (only if test files exist)
                 if any(tc.get("tool") == "apply_patch" and tc.get("success")
                        for tc in all_tool_results):
-                    self._report_progress("Running tests", "Executing pytest...")
-                    test_result = self.tools.execute("run_tests", {"cmd": "pytest -q"})
-                    status = "✓ Passed" if test_result.success else "✗ Failed"
-                    self._report_progress("Tests done", status)
-                    all_tool_results.append({
-                        "tool": "run_tests (auto)",
-                        "success": test_result.success,
-                        "output": test_result.output[:300]
-                    })
+                    # Check if test files exist before running tests
+                    from pathlib import Path
+                    project_path = Path(self.project_root)
+                    test_files_exist = (
+                        list(project_path.rglob("test_*.py")) or
+                        list(project_path.rglob("*_test.py")) or
+                        list(project_path.rglob("tests/*.py"))
+                    )
+
+                    if test_files_exist:
+                        self._report_progress("Running tests", "Executing pytest...")
+                        test_result = self.tools.execute("run_tests", {"cmd": "pytest -q"})
+                        status = "✓ Passed" if test_result.success else "✗ Failed"
+                        self._report_progress("Tests done", status)
+                        all_tool_results.append({
+                            "tool": "run_tests (auto)",
+                            "success": test_result.success,
+                            "output": test_result.output[:300]
+                        })
+                    else:
+                        self._report_progress("Tests skipped", "No test files found")
             else:
                 # 툴콜 없으면 최종 응답
                 final_response = response.content
