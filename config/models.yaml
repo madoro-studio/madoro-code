@@ -1,0 +1,144 @@
+# VibeCoder - Model Configuration
+#
+# Principles:
+# - Local models: Fast, simple tasks (requires Ollama)
+# - API models: Complex analysis/reasoning
+# - Minimize context (retrieve, don't inject)
+
+models:
+  # ============================================
+  # Local Models (Ollama) - For advanced users
+  # You can use any Ollama model by changing ollama_model
+  # Examples: llama3.3:70b, codellama:34b, mistral:7b, etc.
+  # ============================================
+  ollama-local:
+    name: "ollama-local"
+    display_name: "Ollama Local Model"
+    description: "Custom local model (edit ollama_model in config)"
+    provider: "ollama"
+    ollama_model: "qwen2.5-coder:7b"  # Change this to any Ollama model
+    context_length: 8192
+    temperature: 0.3
+    use_for:
+      - coding
+      - refactoring
+      - patch
+
+  # ============================================
+  # API Models - DeepSeek (Cost-effective)
+  # ============================================
+  deepseek-v3:
+    name: "deepseek-chat"
+    display_name: "DeepSeek V3 (API)"
+    description: "Best value, excellent at coding"
+    provider: "deepseek"
+    api_model: "deepseek-chat"
+    context_length: 64000
+    temperature: 0.3
+    use_for:
+      - coding
+      - analysis
+      - reasoning
+
+  deepseek-reasoner:
+    name: "deepseek-reasoner"
+    display_name: "DeepSeek R1 (API)"
+    description: "Reasoning specialist, complex problem solving"
+    provider: "deepseek"
+    api_model: "deepseek-reasoner"
+    context_length: 64000
+    temperature: 0.5
+    use_for:
+      - reasoning
+      - architecture
+      - debugging
+
+  # ============================================
+  # API Models - Claude (Best Performance)
+  # ============================================
+  claude-sonnet:
+    name: "claude-sonnet-4"
+    display_name: "Claude Sonnet 4 (API)"
+    description: "Balanced performance and cost"
+    provider: "anthropic"
+    api_model: "claude-sonnet-4-20250514"
+    context_length: 200000
+    temperature: 0.3
+    use_for:
+      - coding
+      - analysis
+
+  claude-opus:
+    name: "claude-opus-4"
+    display_name: "Claude Opus 4 (API)"
+    description: "Best performance, complex decisions"
+    provider: "anthropic"
+    api_model: "claude-opus-4-20250514"
+    context_length: 200000
+    temperature: 0.3
+    use_for:
+      - architecture
+      - complex_analysis
+      - critical_decisions
+
+  # ============================================
+  # API Models - Google Gemini (Latest 2025)
+  # ============================================
+  gemini-flash:
+    name: "gemini-3-flash"
+    display_name: "Gemini 3 Flash (API)"
+    description: "Latest, fast and balanced performance"
+    provider: "google"
+    api_model: "gemini-3-flash-preview"
+    context_length: 1000000
+    temperature: 0.3
+    use_for:
+      - coding
+      - analysis
+      - quick_tasks
+
+  gemini-pro:
+    name: "gemini-2.5-pro"
+    display_name: "Gemini 2.5 Pro (API)"
+    description: "Advanced thinking model for complex reasoning"
+    provider: "google"
+    api_model: "gemini-2.5-pro"
+    context_length: 1000000
+    temperature: 0.3
+    use_for:
+      - reasoning
+      - architecture
+      - complex_analysis
+
+# Default model
+default_model: "deepseek-reasoner"
+
+# Context settings
+context:
+  max_recent_turns: 5
+  max_related_files: 10
+  max_context_tokens: 2000
+
+# Ollama server settings (for local models)
+# Advanced users can change the model by editing ollama_model above
+ollama:
+  base_url: "http://127.0.0.1:11434"
+  timeout: 120
+
+# API settings (set via Settings > API Keys)
+api:
+  deepseek:
+    base_url: "https://api.deepseek.com"
+    api_key: ""
+
+  anthropic:
+    api_key: ""
+
+  google:
+    api_key: ""
+
+# Work settings
+work:
+  auto_test: true
+  auto_log: true
+  rollback_on_test_fail: true

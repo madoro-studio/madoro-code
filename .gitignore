@@ -1,0 +1,45 @@
+# Build artifacts
+build/
+dist/
+*.exe
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Database (user data, not tracked)
+db/
+projects/
+*.db
+
+# User config (contains API keys)
+config/projects.json
+config/app_settings.json
+.env
+.env.*
+
+# Temp files
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Keep these (don't ignore)
+# !config/models.yaml  <- template included
+# !assets/             <- icons included
+# !logs/.gitkeep       <- placeholder
+# !tests/.gitkeep      <- placeholder
