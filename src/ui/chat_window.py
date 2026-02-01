@@ -424,6 +424,7 @@ class ChatWindow(QMainWindow):
         self.elapsed_seconds = 0
         self.ssot_bridge = SSOTApprovalBridge()  # Bridge for SSOT approvals
         self.approval_check_timer = None  # Timer to check for pending approvals
+        self.project_manager = None  # Will be set in load_settings
 
         self.load_settings()
         self.init_ui()
@@ -460,6 +461,7 @@ class ChatWindow(QMainWindow):
         try:
             from project_manager import get_project_manager
             pm = get_project_manager()
+            self.project_manager = pm  # Store reference for later use
             active_project = pm.get_active_project()
             if active_project and Path(active_project.path).exists():
                 self.project_path = active_project.path
