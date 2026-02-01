@@ -61,6 +61,8 @@ class ToolExecutor:
             "list_files": self._list_files,
             "get_diff": self._get_diff,
             "update_ssot": self._update_ssot,
+            "git_commit": self._git_commit,
+            "git_push": self._git_push,
         }
 
         handler = handlers.get(tool_name)
@@ -567,6 +569,92 @@ class ToolExecutor:
         except Exception as e:
             return ToolResult(False, "", f"Failed to get diff: {e}")
 
+    def _git_commit(self, args: Dict) -> ToolResult:
+        """Git add and commit"""
+        message = args.get("message", "")
+        files = args.get("files", [])  # List of files to add, empty = all
+
+        if not message:
+            return ToolResult(False, "", "commit message required")
+
+        try:
+            # Git add
+            if files:
+                for f in files:
+                    add_result = subprocess.run(
+                        ["git", "add", f],
+                        capture_output=True,
+                        text=True,
+                        timeout=30,
+                        cwd=self.project_root
+                    )
+            else:
+                # Add all changes
+                add_result = subprocess.run(
+                    ["git", "add", "-A"],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                    cwd=self.project_root
+                )
+
+            # Git commit
+            commit_result = subprocess.run(
+                ["git", "commit", "-m", message],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                cwd=self.project_root
+            )
+
+            if commit_result.returncode == 0:
+                return ToolResult(
+                    success=True,
+                    output=commit_result.stdout,
+                    data={"message": message}
+                )
+            else:
+                return ToolResult(
+                    success=False,
+                    output=commit_result.stdout,
+                    error=commit_result.stderr
+                )
+        except Exception as e:
+            return ToolResult(False, "", f"Git commit failed: {e}")
+
+    def _git_push(self, args: Dict) -> ToolResult:
+        """Git push"""
+        remote = args.get("remote", "origin")
+        branch = args.get("branch", "")
+
+        try:
+            cmd = ["git", "push", remote]
+            if branch:
+                cmd.append(branch)
+
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=60,
+                cwd=self.project_root
+            )
+
+            if result.returncode == 0:
+                return ToolResult(
+                    success=True,
+                    output=result.stdout or result.stderr or "Push successful",
+                    data={"remote": remote, "branch": branch}
+                )
+            else:
+                return ToolResult(
+                    success=False,
+                    output=result.stdout,
+                    error=result.stderr
+                )
+        except Exception as e:
+            return ToolResult(False, "", f"Git push failed: {e}")
+
     def _update_ssot(self, args: Dict) -> ToolResult:
         """Update SSOT documents (HANDOVER, CHECKLIST, DECISIONS, etc.)"""
         updates = args.get("updates", [])
@@ -696,9 +784,9 @@ TOOL_DEFINITIONS = [
     },
     {
         "name": "apply_patch",
-        "description": "Modify/create files",
+        "description": "Create new files or modify existing files. Use this tool to write code, create schemas, config files, etc.",
         "parameters": {
-            "files": "List of files to modify [{path, content or diff}]"
+            "files": "List of files to create/modify [{path: 'file/path.py', content: 'file content'}]"
         }
     },
     {
@@ -731,6 +819,22 @@ TOOL_DEFINITIONS = [
         "description": "Update SSOT documents (HANDOVER.md, CHECKLIST.md, DECISIONS.md, etc.)",
         "parameters": {
             "updates": "List of updates [{file, section, content, action}]. action: append|add_item|check_item|replace"
+        }
+    },
+    {
+        "name": "git_commit",
+        "description": "Stage files and create a git commit",
+        "parameters": {
+            "message": "Commit message (required)",
+            "files": "List of files to stage (optional, default: all changes)"
+        }
+    },
+    {
+        "name": "git_push",
+        "description": "Push commits to remote repository",
+        "parameters": {
+            "remote": "Remote name (optional, default: origin)",
+            "branch": "Branch name (optional, default: current branch)"
         }
     }
 ]

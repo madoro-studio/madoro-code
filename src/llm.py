@@ -473,7 +473,9 @@ class LLMClient:
                 'run_tests': ['cmd'],
                 'list_files': ['path'],
                 'get_diff': [],
-                'update_ssot': ['updates']
+                'update_ssot': ['updates'],
+                'git_commit': ['message', 'files'],
+                'git_push': ['remote', 'branch']
             }
             for tool_name, params in xml_tools.items():
                 pattern = rf'<{tool_name}>(.*?)</{tool_name}>'
