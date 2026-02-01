@@ -60,6 +60,7 @@ class ToolExecutor:
             "run_tests": self._run_tests,
             "list_files": self._list_files,
             "get_diff": self._get_diff,
+            "update_ssot": self._update_ssot,
         }
 
         handler = handlers.get(tool_name)
@@ -566,6 +567,109 @@ class ToolExecutor:
         except Exception as e:
             return ToolResult(False, "", f"Failed to get diff: {e}")
 
+    def _update_ssot(self, args: Dict) -> ToolResult:
+        """Update SSOT documents (HANDOVER, CHECKLIST, DECISIONS, etc.)"""
+        updates = args.get("updates", [])
+        if not updates:
+            return ToolResult(False, "", "No updates provided")
+
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        results = []
+
+        for update in updates:
+            file_name = update.get("file", "")
+            section = update.get("section", "")
+            content = update.get("content", "")
+            action = update.get("action", "append")  # append, replace, add_item
+
+            if file_name not in SSOT_FILES:
+                results.append(f"❌ {file_name}: Not a valid SSOT file")
+                continue
+
+            file_path = self.project_root / file_name
+
+            try:
+                if file_path.exists():
+                    old_content = file_path.read_text(encoding="utf-8")
+                else:
+                    old_content = f"# {file_name.replace('.md', '')}\n"
+
+                # Update timestamp
+                import re
+                if "Last updated:" in old_content:
+                    new_content = re.sub(
+                        r'Last updated:.*',
+                        f'Last updated: {timestamp}',
+                        old_content
+                    )
+                else:
+                    lines = old_content.split('\n')
+                    if lines:
+                        lines.insert(1, f'Last updated: {timestamp}')
+                        new_content = '\n'.join(lines)
+                    else:
+                        new_content = f"Last updated: {timestamp}\n{old_content}"
+
+                # Apply update based on action
+                if action == "append":
+                    if section:
+                        # Find section and append
+                        section_pattern = re.compile(rf'^(##+ {re.escape(section)}.*?)(?=^##|\Z)', re.MULTILINE | re.DOTALL)
+                        match = section_pattern.search(new_content)
+                        if match:
+                            section_end = match.end()
+                            new_content = new_content[:section_end].rstrip() + f"\n{content}\n" + new_content[section_end:]
+                        else:
+                            new_content += f"\n## {section}\n{content}\n"
+                    else:
+                        new_content += f"\n{content}\n"
+
+                elif action == "add_item":
+                    # Add checklist item (- [ ] item)
+                    if section:
+                        section_pattern = re.compile(rf'^(##+ {re.escape(section)}.*?)(?=^##|\Z)', re.MULTILINE | re.DOTALL)
+                        match = section_pattern.search(new_content)
+                        if match:
+                            section_text = match.group(1)
+                            # Find last checkbox item
+                            last_item = list(re.finditer(r'^- \[[ x]\].*$', section_text, re.MULTILINE))
+                            if last_item:
+                                insert_pos = match.start() + last_item[-1].end()
+                                new_content = new_content[:insert_pos] + f"\n- [ ] {content}" + new_content[insert_pos:]
+                            else:
+                                section_end = match.end()
+                                new_content = new_content[:section_end].rstrip() + f"\n- [ ] {content}\n" + new_content[section_end:]
+
+                elif action == "check_item":
+                    # Mark item as completed
+                    item_pattern = re.compile(rf'^- \[ \] {re.escape(content)}', re.MULTILINE)
+                    new_content = item_pattern.sub(f'- [x] {content}', new_content)
+
+                elif action == "replace":
+                    if section:
+                        section_pattern = re.compile(rf'^(##+ {re.escape(section)}\n).*?(?=^##|\Z)', re.MULTILINE | re.DOTALL)
+                        new_content = section_pattern.sub(rf'\1{content}\n', new_content)
+
+                # Request approval if callback exists
+                if self.ssot_approval_callback:
+                    approved = self.ssot_approval_callback(file_name, str(file_path), old_content, new_content)
+                    if not approved:
+                        results.append(f"⏭️ {file_name}: Skipped (not approved)")
+                        continue
+
+                file_path.write_text(new_content, encoding="utf-8")
+                results.append(f"✅ {file_name}: Updated successfully")
+
+            except Exception as e:
+                results.append(f"❌ {file_name}: {str(e)}")
+
+        return ToolResult(
+            success=all("✅" in r for r in results),
+            output="\n".join(results),
+            data={"updated_files": [u.get("file") for u in updates]}
+        )
+
 
 # ============================================
 # Tool Definitions (for LLM)
@@ -620,6 +724,13 @@ TOOL_DEFINITIONS = [
         "parameters": {
             "staged": "Staged changes only (optional, default false)",
             "path": "File path (optional)"
+        }
+    },
+    {
+        "name": "update_ssot",
+        "description": "Update SSOT documents (HANDOVER.md, CHECKLIST.md, DECISIONS.md, etc.)",
+        "parameters": {
+            "updates": "List of updates [{file, section, content, action}]. action: append|add_item|check_item|replace"
         }
     }
 ]

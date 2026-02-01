@@ -20,7 +20,7 @@ from PyQt6.QtWidgets import (
     QListView, QStyledItemDelegate
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer, QSettings, QMimeData, QUrl
-from PyQt6.QtGui import QFont, QColor, QPalette, QIcon, QImage
+from PyQt6.QtGui import QFont, QColor, QPalette, QIcon, QImage, QCloseEvent
 
 
 # ============================================
@@ -1315,6 +1315,82 @@ class ChatWindow(QMainWindow):
             parts.append("○ No agent")
 
         self.statusBar.showMessage("  │  ".join(parts))
+
+    def closeEvent(self, event: QCloseEvent):
+        """Handle window close - prompt for SSOT update"""
+        # Check if there's an active project and recent conversation
+        if self.project_path and self.agent and self.agent.memory:
+            recent_turns = self.agent.memory.get_recent_turns(limit=10)
+
+            if len(recent_turns) > 2:  # Only ask if there was meaningful conversation
+                reply = QMessageBox.question(
+                    self,
+                    "Save Progress",
+                    "Do you want to update project documents (HANDOVER, CHECKLIST) before closing?\n\n"
+                    "This will save your session progress to SSOT files.",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel,
+                    QMessageBox.StandardButton.Yes
+                )
+
+                if reply == QMessageBox.StandardButton.Cancel:
+                    event.ignore()
+                    return
+                elif reply == QMessageBox.StandardButton.Yes:
+                    self._save_session_to_ssot()
+
+        event.accept()
+
+    def _save_session_to_ssot(self):
+        """Save current session progress to SSOT documents"""
+        if not self.project_path or not self.agent:
+            return
+
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        try:
+            # Get recent conversation summary
+            recent_turns = self.agent.memory.get_recent_turns(limit=20)
+
+            # Build session summary from recent turns
+            session_summary = []
+            for turn in recent_turns[-10:]:
+                if turn['role'] == 'user':
+                    content = turn['content'][:100]
+                    if len(turn['content']) > 100:
+                        content += "..."
+                    session_summary.append(f"- User: {content}")
+
+            # Update HANDOVER.md
+            handover_path = Path(self.project_path) / "HANDOVER.md"
+            if handover_path.exists():
+                content = handover_path.read_text(encoding="utf-8")
+
+                # Update timestamp
+                import re
+                if "Last updated:" in content:
+                    content = re.sub(r'Last updated:.*', f'Last updated: {timestamp}', content)
+
+                # Add session note
+                session_note = f"\n\n---\n### Session Note ({timestamp})\nRecent activity recorded.\n"
+
+                # Find a good place to insert (after "## Current State" or at end)
+                if "## Current State" in content:
+                    # Insert after Current State section header
+                    idx = content.find("## Current State")
+                    next_section = content.find("\n## ", idx + 1)
+                    if next_section > 0:
+                        content = content[:next_section] + session_note + content[next_section:]
+                    else:
+                        content += session_note
+                else:
+                    content += session_note
+
+                handover_path.write_text(content, encoding="utf-8")
+                print(f"[UI] HANDOVER.md updated at {timestamp}")
+
+        except Exception as e:
+            print(f"[UI] Failed to save session to SSOT: {e}")
 
 
 def main():

@@ -46,6 +46,15 @@ Response Rules:
 - If the user pastes content directly, analyze it immediately without using file read tools
 - Only use read_file tool when the user mentions a file path without providing content
 - Avoid unnecessary tool calls: respond directly if the user already provided the information
+
+SSOT Update Rules (when user says "save", "update docs", "save progress"):
+- Use update_ssot tool to update project documentation
+- Analyze recent conversation to extract: completed tasks, decisions, progress
+- Update appropriate files:
+  - HANDOVER.md: Current state, completed items, in progress, next steps
+  - CHECKLIST.md: Check completed items [x], add new items [ ]
+  - DECISIONS.md: Add new architectural/design decisions
+- Include brief description of changes
 """
 
     MAX_ITERATIONS = 5  # 최대 툴콜 반복 횟수
