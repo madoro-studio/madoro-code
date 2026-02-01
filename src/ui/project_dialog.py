@@ -313,10 +313,19 @@ Format: Date, Decision, Rationale, Alternatives, Impact""")
             QMessageBox.warning(self, "Error", "Please select a project path.")
             return
 
-        # Create project subfolder with sanitized name
-        folder_name = name.replace(" ", "_").replace("-", "_")
-        folder_name = "".join(c for c in folder_name if c.isalnum() or c == "_")
-        project_path = Path(base_path) / folder_name
+        base_path_obj = Path(base_path)
+
+        # If editing existing project, use the existing path directly
+        if self.project:
+            project_path = base_path_obj
+        # If base_path already exists and has files, use it directly (existing project folder)
+        elif base_path_obj.exists() and any(base_path_obj.iterdir()):
+            project_path = base_path_obj
+        else:
+            # Create project subfolder with sanitized name (for new empty location)
+            folder_name = name.replace(" ", "_").replace("-", "_")
+            folder_name = "".join(c for c in folder_name if c.isalnum() or c == "_")
+            project_path = base_path_obj / folder_name
 
         try:
             project_path.mkdir(parents=True, exist_ok=True)
