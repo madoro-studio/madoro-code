@@ -10,7 +10,6 @@
 
 <p align="center">
   <a href="#features">Features</a> •
-  <a href="#screenshots">Screenshots</a> •
   <a href="#installation">Installation</a> •
   <a href="#quick-start">Quick Start</a> •
   <a href="#supported-models">Models</a> •
@@ -71,31 +70,9 @@
 
 ---
 
-## Screenshots
-
-### SSOT Approval Popup
-When AI attempts to modify critical documents (HANDOVER.md, DECISIONS.md, etc.), you'll see a side-by-side diff for approval:
-
-<!-- TODO: Add screenshot -->
-![SSOT Approval](docs/screenshots/ssot-approval.png)
-
-### DECISIONS Tab
-Track all architectural decisions directly in your project:
-
-<!-- TODO: Add screenshot -->
-![DECISIONS Tab](docs/screenshots/decisions-tab.png)
-
----
-
 ## Installation
 
-### Option 1: Download Release (Recommended)
-
-1. Download the latest `MADORO_CODE.exe` from [Releases](https://github.com/madoro-studio/madoro-code/releases)
-2. Extract to a folder (e.g., `C:\MADORO_CODE\`)
-3. Run `MADORO_CODE.exe`
-
-### Option 2: Build from Source
+### Build from Source
 
 ```bash
 # Clone the repository
@@ -112,6 +89,10 @@ python main.py
 pip install pyinstaller
 pyinstaller MADORO_CODE.spec --noconfirm
 ```
+
+### Download Release
+
+Pre-built executables will be available in [Releases](https://github.com/madoro-studio/madoro-code/releases) soon.
 
 ---
 
