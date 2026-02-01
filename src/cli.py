@@ -1,5 +1,5 @@
 """
-VibeCoder - CLI 진입점
+MADORO CODE - CLI 진입점
 
 명령어:
 - vibe doctor: 프로젝트 상태 진단
@@ -57,7 +57,7 @@ def cmd_chat(args):
 
     # 대화 시작
     print("=" * 60)
-    print("  VibeCoder Chat")
+    print("  MADORO CODE Chat")
     print(f"  Model: {llm.get_model_config().display_name}")
     print("  Type 'exit' to quit, 'doctor' for status")
     print("=" * 60)
@@ -147,7 +147,7 @@ def cmd_models(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="VibeCoder - 프로젝트 기억 시스템"
+        description="MADORO CODE - 프로젝트 기억 시스템"
     )
     subparsers = parser.add_subparsers(dest="command", help="명령어")
 

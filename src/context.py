@@ -1,5 +1,5 @@
 """
-VibeCoder - 컨텍스트 팩 생성기
+MADORO CODE - 컨텍스트 팩 생성기
 
 핵심 원칙:
 - 컨텍스트는 "주입"이 아니라 "조회"
@@ -213,7 +213,7 @@ def get_context_builder(project_root: str = ".") -> ContextBuilder:
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("  VibeCoder Context Builder Test")
+    print("  MADORO CODE Context Builder Test")
     print("=" * 60)
 
     builder = ContextBuilder(".")

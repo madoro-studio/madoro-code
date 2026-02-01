@@ -1,5 +1,5 @@
 """
-VibeCoder - Tool Call System
+MADORO CODE - Tool Call System
 
 4 core tools:
 1. read_file - Read file content
@@ -633,7 +633,7 @@ if __name__ == "__main__":
     import tempfile
 
     print("=" * 60)
-    print("  VibeCoder Tools Test")
+    print("  MADORO CODE Tools Test")
     print("=" * 60)
 
     with tempfile.TemporaryDirectory() as tmpdir:

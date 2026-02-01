@@ -1,5 +1,5 @@
 """
-VibeCoder - LLM 클라이언트 (Ollama + DeepSeek + Claude API)
+MADORO CODE - LLM 클라이언트 (Ollama + DeepSeek + Claude API)
 
 LLM은 작업자이지 기억 장치가 아니다.
 """
@@ -492,7 +492,7 @@ def reset_llm_client():
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("  VibeCoder LLM Client Test")
+    print("  MADORO CODE LLM Client Test")
     print("=" * 60)
 
     client = LLMClient()

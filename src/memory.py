@@ -1,5 +1,5 @@
 """
-VibeCoder - Project Memory System
+MADORO CODE - Project Memory System
 
 Memory is stored in DB/files, not in the model.
 """
@@ -436,7 +436,7 @@ if __name__ == "__main__":
     import tempfile
 
     print("=" * 60)
-    print("  VibeCoder Memory Store Test")
+    print("  MADORO CODE Memory Store Test")
     print("=" * 60)
 
     # Test with temporary DB

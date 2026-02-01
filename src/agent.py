@@ -1,5 +1,5 @@
 """
-VibeCoder - 에이전트 루프
+MADORO CODE - 에이전트 루프
 
 작동 플로우:
 1. 사용자 요청
@@ -29,9 +29,9 @@ class AgentResponse:
 
 
 class Agent:
-    """VibeCoder 에이전트"""
+    """MADORO CODE 에이전트"""
 
-    SYSTEM_PROMPT = """You are VibeCoder, a coding assistant.
+    SYSTEM_PROMPT = """You are MADORO CODE, a coding assistant.
 
 Core Principles:
 1. Memory is managed by the system. Don't try to remember entire conversation history.
@@ -255,7 +255,7 @@ Response Rules:
 
         report = []
         report.append("=" * 60)
-        report.append("  VibeCoder Doctor - 프로젝트 상태 리포트")
+        report.append("  MADORO CODE Doctor - 프로젝트 상태 리포트")
         report.append("=" * 60)
         report.append("")
 
@@ -335,7 +335,7 @@ def get_agent(project_root: str = ".") -> Agent:
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("  VibeCoder Agent Test")
+    print("  MADORO CODE Agent Test")
     print("=" * 60)
 
     agent = Agent(".")
